@@ -1,0 +1,1 @@
+ff6a960fb7d74a5bc459b66d6e7ef78ba53ec00a95a863d1c7a1242c81a7fffb  staking.wasm
