@@ -96,6 +96,24 @@ pub fn execute_update_fee_address(
     )
 }
 
+pub fn execute_update_tx_fee(
+    storage: &mut dyn Storage,
+    address: Addr,
+    tx_fee: Uint128,
+) -> Result<Response, ContractError> {
+    check_owner(storage, address)?;
+    
+    CONFIG.update(storage, |mut exists| -> StdResult<_> {
+        exists.tx_fee = tx_fee.clone();
+        Ok(exists)
+    })?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_tx_fee")
+        .add_attribute("tx_fee", tx_fee.clone())
+    )
+}
+
 pub fn execute_registe_collection(
     storage: &mut dyn Storage,
     address: Addr,
@@ -215,7 +233,7 @@ pub fn transfer_token_message(
             return Ok(BankMsg::Send {
                 to_address: receiver.clone().into(),
                 amount: vec![Coin{
-                    denom: native_str,
+                    denom: native_str.clone(),
                     amount
                 }]
             }.into());
@@ -288,7 +306,6 @@ pub fn get_in_locktime_nft_count(
     collection_address: Addr,
 ) -> Result<Uint128, ContractError> {
     let mut count = 0;
-   // let result: StdResult<Vec<(Addr, UserInfo)>> = COLLECTION_MAP.load(storage, collection_address)?;
     let collection = COLLECTION_MAP.load(storage, collection_address.clone())?;
     let users = collection.users;
     for userinfo in users.iter() {

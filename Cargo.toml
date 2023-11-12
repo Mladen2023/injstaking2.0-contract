@@ -52,6 +52,7 @@ thiserror = "1.0.31"
 cosmwasm-schema = "1.1.5"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 schemars = "0.8.3"
+semver = "1"
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, from_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, CosmosMsg, WasmMsg};
+use cosmwasm_std::{to_binary, from_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, CosmosMsg, WasmMsg, Empty};
 
 use cw2::set_contract_version;
 use cw20::Denom;
@@ -42,18 +42,24 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    
+
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let config = Config {
         owner: msg.owner.clone(),
         creator: msg.owner.clone(),
         fee_address: msg.fee_address.clone(),
+        tx_fee: msg.tx_fee.clone(),
         native_token: msg.native_token.clone(),
     };
 
     CONFIG.save(deps.storage, &config)?;
     
+    Ok(Response::default())
+}
+
+#[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     Ok(Response::default())
 }
 
@@ -78,6 +84,13 @@ pub fn execute(
             deps.storage, 
             info.sender, 
             fee_address
+        ),
+        ExecuteMsg::UpdateTxFee { 
+            tx_fee
+        } => util::execute_update_tx_fee(
+            deps.storage, 
+            info.sender, 
+            tx_fee
         ),
         ExecuteMsg::RegisteCollection { 
             collection_address, 
@@ -188,14 +201,14 @@ pub fn execute(
             info, 
             collection_address,
         ),
-        ExecuteMsg::ReceiveNft (
+        /* ExecuteMsg::ReceiveNft (
             msg
         ) => execute_receive_nft(
             deps, 
             env, 
             info, 
             msg
-        ),
+        ), */
         ExecuteMsg::Unstake {
             collection_address,
             token_id
@@ -259,7 +272,7 @@ pub fn execute_charge (
     let cfg = CONFIG.load(deps.storage)?;
     let mut collection = COLLECTION_MAP.load(deps.storage, collection_address.clone())?;
 
-    let receive_amount = match must_pay(&info, &cfg.native_token.clone()) {
+    let receive_amount = match must_pay(&info, &cfg.native_token) {
         Ok(it) => it,
         Err(_err) => return Err(ContractError::InsufficientCw20 {  }),
     }.u128();
@@ -549,6 +562,17 @@ pub fn execute_stake (
 ) -> Result<Response, ContractError> {
     util::check_enabled(deps.storage, collection_address.clone())?;
     util::check_airdrop_start(deps.storage, collection_address.clone())?;
+
+    let cfg = CONFIG.load(deps.storage)?;
+    let fee_amount = match must_pay(&info, &cfg.native_token) {
+        Ok(it) => it,
+        Err(_err) => return Err(ContractError::InsufficientCw20 {  }),
+    }.u128();
+
+    if fee_amount < u128::from(cfg.tx_fee) {
+        return Err(ContractError::InsufficientCw20 {  })
+    }
+
     let mut msgs:Vec<CosmosMsg> = vec![];
     let mut nftinfos = vec![];
     let user_addr = info.sender.clone();
@@ -688,6 +712,16 @@ pub fn execute_restake(
     util::check_enabled(deps.storage, collection_address.clone())?;
     util::check_airdrop_start(deps.storage, collection_address.clone())?;
 
+    let cfg = CONFIG.load(deps.storage)?;
+    let fee_amount = match must_pay(&info, &cfg.native_token) {
+        Ok(it) => it,
+        Err(_err) => return Err(ContractError::InsufficientCw20 {  }),
+    }.u128();
+
+    if fee_amount < u128::from(cfg.tx_fee) {
+        return Err(ContractError::InsufficientCw20 {  })
+    }
+
     let mut collection = COLLECTION_MAP.load(deps.storage, collection_address.clone())?;
     let user_index = collection.users.iter().position(|user_info| user_info.address == info.sender).unwrap_or(usize::MAX);
     
@@ -802,17 +836,20 @@ pub fn execute_unstake(
         
         userinfo.staked_nfts.remove(index);
     }
+    
 	if total_fee > Uint128::zero() {
-		let receive_fee = match must_pay(&info, &cfg.native_token.clone()) {
+		let receive_fee = match must_pay(&info, &cfg.native_token) {
 			Ok(it) => it,
 			Err(_err) => return Err(ContractError::Locktime {  }),
 		}.u128();
 
 		if receive_fee >= u128::from(total_fee) {
 			let owner_fee = u128::from(total_fee) * u128::from(collection.unstaking_fee_percent) / 100u128;
-			let owner_fee_msg = util::transfer_token_message(Denom::Native(cfg.native_token.clone()), Uint128::from(owner_fee), cfg.fee_address.clone())?;
+            if owner_fee > 0u128 {
+                let owner_fee_msg = util::transfer_token_message(Denom::Native(cfg.native_token.clone()), Uint128::from(owner_fee), cfg.fee_address.clone())?;
+                msgs.push(owner_fee_msg);
+            }
 			let fee_msg = util::transfer_token_message(Denom::Native(cfg.native_token.clone()), total_fee - Uint128::from(owner_fee), collection.fee_address.clone())?;
-			msgs.push(owner_fee_msg);
 			msgs.push(fee_msg);
 		} else {
 			return Err(ContractError::Locktime {  });
@@ -927,6 +964,7 @@ pub fn query_config(
     Ok(ConfigResponse {
         owner: config.owner,
         fee_address: config.fee_address,
+        tx_fee: config.tx_fee
     })
 }
 

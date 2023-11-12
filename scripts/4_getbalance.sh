@@ -1,13 +1,13 @@
-str=$(cat ./config.sh | grep "INJ_ADDRESS")
+str=$(cat ./config | grep "INJ_ADDRESS")
 INJ_ADDRESS=${str:12}
 
-str=$(cat ./config.sh | grep "STAKER1")
+str=$(cat ./config | grep "STAKER1")
 STAKER1=${str:8}
 
-str=$(cat ./config.sh | grep "STAKER2")
+str=$(cat ./config | grep "STAKER2")
 STAKER2=${str:8}
 
-str=$(cat ./config.sh | grep "CONTRACT_ADDRESS")
+str=$(cat ./config | grep "CONTRACT_ADDRESS")
 CONTRACT_ADDRESS=${str:17}
 
 echo "HARPOONTEST BALANCE"

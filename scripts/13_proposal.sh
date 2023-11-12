@@ -1,10 +1,10 @@
-str=$(cat ./config.sh | grep "INJ_ADDRESS")
+str=$(cat ./config | grep "INJ_ADDRESS")
 INJ_ADDRESS=${str:12}
 
-str=$(cat ./config.sh | grep "OWNER")
+str=$(cat ./config | grep "OWNER")
 OWNER=${str:6}
 
-str=$(cat ./config.sh | grep "CONTRACT_ADDRESS")
+str=$(cat ./config | grep "CONTRACT_ADDRESS")
 CONTRACT_ADDRESS=${str:17}
 
 yes 12345678 | injectived tx gov submit-proposal wasm-store artifacts/staking.wasm \

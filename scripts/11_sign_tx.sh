@@ -1,7 +1,7 @@
-str=$(cat ./config.sh | grep "INJ_ADDRESS")
+str=$(cat ./config | grep "INJ_ADDRESS")
 INJ_ADDRESS=${str:12}
 
-str=$(cat ./config.sh | grep "CONTRACT_ADDRESS")
+str=$(cat ./config | grep "CONTRACT_ADDRESS")
 CONTRACT=${str:17}
 
 yes 12345678 | injectived tx sign unsigned_tx.json \

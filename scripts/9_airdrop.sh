@@ -1,10 +1,10 @@
-str=$(cat ./config.sh | grep "INJ_ADDRESS")
+str=$(cat ./config | grep "INJ_ADDRESS")
 INJ_ADDRESS=${str:12}
 
-str=$(cat ./config.sh | grep "CONTRACT_ADDRESS")
+str=$(cat ./config | grep "CONTRACT_ADDRESS")
 CONTRACT_ADDRESS=${str:17}
 
-str=$(cat ./config.sh | grep "COLLECTION_ADDRESS")
+str=$(cat ./config | grep "COLLECTION_ADDRESS")
 COLLECTION_ADDRESS=${str:19}
 
 export AIRDROP='{"airdrop":{"airdrop_amount":"30000000000000000000"}}'

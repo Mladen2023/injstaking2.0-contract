@@ -1,4 +1,4 @@
-str=$(cat ./config.sh | grep "INJ_ADDRESS")
+str=$(cat ./config | grep "INJ_ADDRESS")
 INJ_ADDRESS=${str:12}
 
 yes 12345678 | injectived tx wasm store artifacts/staking.wasm \

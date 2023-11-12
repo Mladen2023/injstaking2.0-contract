@@ -8,6 +8,7 @@ pub struct Config {
     pub creator: Addr,
     pub fee_address: Addr,
     pub native_token: String,
+    pub tx_fee: Uint128,
 }
 
 #[cw_serde]

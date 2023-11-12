@@ -1,6 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Uint128, Addr};
-use cw721::Cw721ReceiveMsg;
 
 use crate::state::AirdropInfo;
 use crate::state::EarnInfo;
@@ -10,6 +9,7 @@ pub struct InstantiateMsg {
     pub owner: Addr,
     pub fee_address: Addr,
     pub native_token: String,
+    pub tx_fee: Uint128,
 }
 
 #[cw_serde]
@@ -19,6 +19,9 @@ pub enum ExecuteMsg {
     },
     UpdateFeeAddress {
         fee_address: Addr,
+    },
+    UpdateTxFee {
+        tx_fee: Uint128,
     },
     RegisteCollection {
         collection_address: Addr,
@@ -67,7 +70,7 @@ pub enum ExecuteMsg {
     AirdropRestart {
         collection_address: Addr,
     },
-    ReceiveNft (Cw721ReceiveMsg),
+    // ReceiveNft (Cw721ReceiveMsg),
     Restake { 
         collection_address: Addr,
         token_id: Vec<String>,
@@ -137,13 +140,14 @@ pub enum QueryMsg {
     GetAirdropInfos {
         address: Addr,
     },
-    
+
 }
 
 #[cw_serde]
 pub struct ConfigResponse {
     pub owner: Addr,
     pub fee_address: Addr,
+    pub tx_fee: Uint128,
 }
 
 #[cw_serde]
